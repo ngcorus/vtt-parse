@@ -1,0 +1,7 @@
+/parsed-vtt/*
+/data/*
+/config/*
+**/.idea/*
+
+
+main/pipelines/connectors.py
