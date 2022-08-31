@@ -30,21 +30,31 @@ s3 = boto3.client( 's3',
                     aws_session_token = aws_session_token
 )
 
-# Grab guids from a file and append to tracker file
+"""
+    Grab guids for processed videos and append to tracker file.
+    A dummy tracker file is created with n/a as value when no videos have been processed for the station before.
+"""
 def setTracker(station_):
-    print('getting guids...')
     trackerfile = '../data/tracker.csv'
     if os.path.exists(trackerfile):
         os.remove(trackerfile)
-    get_station = pd.read_csv(f'../parsed-vtt/{station_}.csv')
-    group_by_guid = get_station.groupby(['guid'], sort=False)
-    for id, allcolumns in group_by_guid:
+    try:
+        print('Checking processed GUIDs...')
+        get_station = pd.read_csv(f'../parsed-vtt/{station_}.csv')
+        group_by_guid = get_station.groupby(['guid'], sort=False)
+        for id, allcolumns in group_by_guid:
+            with open(trackerfile, 'a') as f:
+                f.write(f'{id}\n')
+    except:
+        print('Starting inital parse...')
         with open(trackerfile, 'a') as f:
-            f.write(f'{id}\n')
-
-# Create list of tokens against which the current file is checked to identify if it has already been processed
+            f.write('n/a')
+"""
+    Create list of tokens against which the current file is checked to identify if it has already been processed.
+"""
 def tokens():
     setTracker(station_)
+    print('Initiating CC parsing...')
     tracker = pd.read_csv('../data/tracker.csv', header=None)
     group_by_guid = tracker.groupby([0], sort=False)
     tokens = []
@@ -79,8 +89,9 @@ def parseVTT(file, guid):
     except Exception:
         return
 
-
-# get token list - run this function if the ingest was previously interrupted
+"""
+    get list of guids for validation
+"""
 get_tokens = tokens()
 
 paginator = s3.get_paginator('list_objects')
